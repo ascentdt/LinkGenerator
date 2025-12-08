@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VCF Link Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.png" type="image/png" />
+
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-text">VCF Link Studio</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="page">
+    <div class="container center-wrapper">
+      <div class="frame">
+        <section class="card">
+
+          <header class="card-header">
+            <h1 class="title">Contact & Social Link Generator</h1>
+            <p class="subtitle">
+              Enter any details you want. We’ll generate a downloadable vCard plus
+              links for calls, WhatsApp, Telegram, GitHub, and more.
+            </p>
+            <div class="chip-row">
+              <span class="chip">vCard file</span>
+              <span class="chip">Call links</span>
+              <span class="chip">Social profiles</span>
+            </div>
+          </header>
+
+          <!-- FORM -->
+          <form id="generator-form" class="form-grid">
+
+            <section class="form-section">
+              <h3 class="form-section-title">Contact basics</h3>
+
+              <label class="field">
+                <span class="label">Full name</span>
+                <input type="text" id="name" placeholder="e.g. Satyam Pandey" />
+              </label>
+
+              <label class="field">
+                <span class="label">Mobile (for vCard & call)</span>
+                <input type="tel" id="phone" placeholder="+1 862 214 1863" />
+              </label>
+
+              <label class="field">
+                <span class="label">Landline</span>
+                <input type="text" id="telephone" placeholder="e.g. 022 4891 2121" />
+              </label>
+
+              <label class="field">
+                <span class="label">Email</span>
+                <input type="email" id="email" placeholder="you@example.com" />
+              </label>
+            </section>
+
+            <section class="form-section">
+              <h3 class="form-section-title">Social & links</h3>
+
+              <label class="field">
+                <span class="label">WhatsApp (country code)</span>
+                <input type="text" id="whatsapp" placeholder="e.g. 919225248070" />
+              </label>
+
+              <label class="field">
+                <span class="label">Telegram username</span>
+                <input type="text" id="telegram" placeholder="e.g. satyam" />
+              </label>
+
+              <label class="field">
+                <span class="label">Snapchat username</span>
+                <input type="text" id="snapchat" placeholder="e.g. yourname" />
+              </label>
+
+              <label class="field">
+                <span class="label">Pinterest username</span>
+                <input type="text" id="pinterest" placeholder="e.g. mypinprofile" />
+              </label>
+
+              <label class="field">
+                <span class="label">GitHub username</span>
+                <input type="text" id="github" placeholder="e.g. satyamdev" />
+              </label>
+
+              <label class="field">
+                <span class="label">Website</span>
+                <input type="text" id="website" placeholder="https://example.com" />
+              </label>
+
+              <label class="field">
+                <span class="label">Address (maps)</span>
+                <input type="text" id="address" placeholder="Times Square, New York" />
+              </label>
+
+              <label class="field">
+                <span class="label">Facebook handle</span>
+                <input type="text" id="facebook" placeholder="your.page" />
+              </label>
+
+              <label class="field">
+                <span class="label">YouTube handle</span>
+                <input type="text" id="youtube" placeholder="@channel" />
+              </label>
+
+              <label class="field">
+                <span class="label">LinkedIn handle</span>
+                <input type="text" id="linkedin" placeholder="your-profile" />
+              </label>
+
+              <label class="field">
+                <span class="label">Instagram username</span>
+                <input type="text" id="instagram" placeholder="@username" />
+              </label>
+
+              <label class="field">
+                <span class="label">Twitter / X username</span>
+                <input type="text" id="twitter" placeholder="yourhandle" />
+              </label>
+            </section>
+
+            <div class="form-actions">
+              <button type="submit" id="generate-btn" class="button">
+                Generate
+              </button>
+            </div>
+          </form>
+
+          <!-- OUTPUTS -->
+          <section class="outputs">
+            <h3 class="outputs-title">Generated outputs</h3>
+            <p class="outputs-note" id="outputs-note">
+              Fill some fields above and click “Generate”.
+            </p>
+
+            <!-- vCard block -->
+            <div id="result" class="result hidden">
+              <div class="output-header">
+                <span class="output-name">vCard download</span>
+                <span class="output-tag">.vcf</span>
+              </div>
+              <div class="result-box">
+                <input type="hidden" id="link-output" />
+                <span class="link-pill" id="link-pill">Link ready</span>
+                <button id="copy-btn" class="copy-btn">Copy</button>
+                <a id="test-link" href="#" class="open-btn" target="_blank">Download</a>
+              </div>
+            </div>
+
+            <!-- dynamically created rows -->
+            <div class="multi-output" id="multi-output"></div>
+          </section>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>© 2025 VCF Link Studio</span>
+      <span class="footer-meta">Black & gold · Node.js + JavaScript</span>
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>

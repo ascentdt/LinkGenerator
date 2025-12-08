@@ -1,0 +1,16 @@
+{
+  "name": "vcf-link-generator",
+  "version": "1.0.0",
+  "description": "Minimal VCF link generator app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "nanoid": "^4.0.0"
+  }
+}
