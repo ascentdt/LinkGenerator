@@ -6,6 +6,9 @@ const crypto = require("crypto");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// When running behind a proxy (Render, etc.) this lets req.protocol be "https"
+app.set("trust proxy", true);
+
 // In-memory store: id → { phone, name }
 const store = new Map();
 
@@ -19,7 +22,7 @@ function generateId() {
 
 // POST /api/generate -> create unique link for given phone (and optional name)
 app.post("/api/generate", (req, res) => {
-  const { phone, name } = req.body;
+  const { phone, name } = req.body || {};
 
   if (!phone || typeof phone !== "string" || !phone.trim()) {
     return res.status(400).json({ error: "Phone number is required." });
@@ -34,6 +37,7 @@ app.post("/api/generate", (req, res) => {
     name: displayName,
   });
 
+  // Base URL works both locally and on Render
   const baseUrl = `${req.protocol}://${req.get("host")}`;
   const link = `${baseUrl}/vcard/${id}`;
 
@@ -66,5 +70,5 @@ app.get("/vcard/:id", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`VCF generator running at http://localhost:${PORT}`);
+  console.log(`VCF generator running on port ${PORT}`);
 });
