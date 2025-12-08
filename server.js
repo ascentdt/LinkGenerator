@@ -72,3 +72,4 @@ app.get("/vcard/:id", (req, res) => {
 app.listen(PORT, () => {
   console.log(`VCF generator running on port ${PORT}`);
 });
+
