@@ -49,12 +49,12 @@
 
               <label class="field">
                 <span class="label">Full name</span>
-                <input type="text" id="name" placeholder="e.g. Satyam Pandey" />
+                <input type="text" id="name" placeholder="e.g. Alyssa Sharma" />
               </label>
 
               <label class="field">
                 <span class="label">Mobile (for vCard & call)</span>
-                <input type="tel" id="phone" placeholder="+1 862 214 1863" />
+                <input type="tel" id="phone" placeholder="+1 240 214 1863" />
               </label>
 
               <label class="field">
@@ -146,23 +146,27 @@
               Fill some fields above and click “Generate”.
             </p>
 
-            <!-- vCard block -->
-            <div id="result" class="result hidden">
-              <div class="output-header">
-                <span class="output-name">vCard download</span>
-                <span class="output-tag">.vcf</span>
-              </div>
-              <div class="result-box">
-                <input type="hidden" id="link-output" />
-                <span class="link-pill" id="link-pill">Link ready</span>
-                <button id="copy-btn" class="copy-btn">Copy</button>
-                <a id="test-link" href="#" class="open-btn" target="_blank">Download</a>
+            <!-- vCard row – same UI style as other rows -->
+            <div id="vcardResult" class="result hidden">
+              <div class="output-row">
+                <div class="output-label">
+                  <span class="small-circle">VC</span>
+                  <span>vCard file</span>
+                </div>
+
+                <div class="link-output" id="vcardStatus">
+                  vCard link ready
+                </div>
+
+                <button class="copy-btn" id="copyVcardUrl">Copy</button>
+                <button class="open-btn" id="downloadVcard">Download</button>
               </div>
             </div>
 
             <!-- dynamically created rows -->
             <div class="multi-output" id="multi-output"></div>
           </section>
+
         </section>
       </div>
     </div>
@@ -172,7 +176,6 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <span>© 2025 Contact Link Studio</span>
-      <span class="footer-meta">Black & gold · Node.js + JavaScript</span>
     </div>
   </footer>
 

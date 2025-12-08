@@ -1,278 +1,238 @@
-// app.js
-
+// Grab form and output containers
 const form = document.getElementById("generator-form");
-const generateBtn = document.getElementById("generate-btn");
-
-// Inputs
-const nameInput = document.getElementById("name");
-const phoneInput = document.getElementById("phone");
-const telephoneInput = document.getElementById("telephone");
-const emailInput = document.getElementById("email");
-
-const whatsappInput = document.getElementById("whatsapp");
-const telegramInput = document.getElementById("telegram");
-const snapchatInput = document.getElementById("snapchat");
-const pinterestInput = document.getElementById("pinterest");
-const githubInput = document.getElementById("github");
-
-const websiteInput = document.getElementById("website");
-const addressInput = document.getElementById("address");
-const facebookInput = document.getElementById("facebook");
-const youtubeInput = document.getElementById("youtube");
-const linkedinInput = document.getElementById("linkedin");
-const instagramInput = document.getElementById("instagram");
-const twitterInput = document.getElementById("twitter");
-
-// vCard UI elements
-const vcardResult = document.getElementById("result");
-const vcardLinkOutput = document.getElementById("link-output");
-const vcardCopyBtn = document.getElementById("copy-btn");
-const vcardOpenLink = document.getElementById("test-link");
-
 const outputsNote = document.getElementById("outputs-note");
 const multiOutput = document.getElementById("multi-output");
 
-// ---------- Output configs ----------
-const linkConfigs = {
-  phone: {
-    label: "Mobile",
-    icon: "📱",
-    input: () => phoneInput.value.trim(),
-    build: (value) => {
-      if (!value) return "";
-      let digits = value.replace(/[^\d]/g, "");
-      if (digits.length < 8) return "";
-      if (!value.startsWith("+")) digits = "1" + digits; // default country, change to "91" if you want
-      return `tel:+${digits}`;
-    },
-  },
-  telephone: {
-    label: "Landline",
-    icon: "☎",
-    input: () => telephoneInput.value.trim(),
-    build: (value) => {
-      if (!value) return "";
-      let digits = value.replace(/[^\d]/g, "");
-      if (digits.length < 6) return "";
-      if (!value.startsWith("+")) digits = "1" + digits; // default country
-      return `tel:+${digits}`;
-    },
-  },
-  email: {
-    label: "Email",
-    icon: "@",
-    input: () => emailInput.value.trim(),
-    build: (v) => (v ? `mailto:${v}` : ""),
-  },
-  whatsapp: {
-    label: "WhatsApp",
-    icon: "WA",
-    input: () => whatsappInput.value.trim(),
-    build: (v) => {
-      const d = v.replace(/[^\d]/g, "");
-      return d ? `https://wa.me/${d}` : "";
-    },
-  },
-  telegram: {
-    label: "Telegram",
-    icon: "TG",
-    input: () => telegramInput.value.trim(),
-    build: (v) => (v ? `https://t.me/${v}` : ""),
-  },
-  snapchat: {
-    label: "Snapchat",
-    icon: "SC",
-    input: () => snapchatInput.value.trim(),
-    build: (v) => (v ? `https://www.snapchat.com/add/${v}` : ""),
-  },
-  pinterest: {
-    label: "Pinterest",
-    icon: "P",
-    input: () => pinterestInput.value.trim(),
-    build: (v) => (v ? `https://www.pinterest.com/${v}` : ""),
-  },
-  github: {
-    label: "GitHub",
-    icon: "GH",
-    input: () => githubInput.value.trim(),
-    build: (v) => (v ? `https://github.com/${v}` : ""),
-  },
-  website: {
-    label: "Website",
-    icon: "www",
-    input: () => websiteInput.value.trim(),
-    build: (v) => {
-      if (!v) return "";
-      if (/^https?:\/\//i.test(v)) return v;
-      return `https://${v}`;
-    },
-  },
-  address: {
-    label: "Maps",
-    icon: "📍",
-    input: () => addressInput.value.trim(),
-    build: (v) =>
-      v
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            v
-          )}`
-        : "",
-  },
-  facebook: {
-    label: "Facebook",
-    icon: "f",
-    input: () => facebookInput.value.trim(),
-    build: (v) => (v ? `https://www.facebook.com/${v}` : ""),
-  },
-  youtube: {
-    label: "YouTube",
-    icon: "▶",
-    input: () => youtubeInput.value.trim(),
-    build: (v) => (v ? `https://www.youtube.com/${v}` : ""),
-  },
-  linkedin: {
-    label: "LinkedIn",
-    icon: "in",
-    input: () => linkedinInput.value.trim(),
-    build: (v) => (v ? `https://www.linkedin.com/in/${v}` : ""),
-  },
-  instagram: {
-    label: "Instagram",
-    icon: "IG",
-    input: () => instagramInput.value.trim(),
-    build: (v) => (v ? `https://www.instagram.com/${v}` : ""),
-  },
-  twitter: {
-    label: "Twitter / X",
-    icon: "X",
-    input: () => twitterInput.value.trim(),
-    build: (v) => (v ? `https://twitter.com/${v}` : ""),
-  },
-};
+// vCard elements
+const vcardResult = document.getElementById("vcardResult");
+const vcardStatus = document.getElementById("vcardStatus");
+const copyVcardUrl = document.getElementById("copyVcardUrl");
+const downloadVcard = document.getElementById("downloadVcard");
 
-// ---------- Submit handler ----------
-if (form) {
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const name = nameInput.value.trim();
-    const phone = phoneInput.value.trim();
-
-    generateBtn.disabled = true;
-    generateBtn.textContent = "Generating…";
-
-    const any =
-      name ||
-      phone ||
-      telephoneInput.value ||
-      emailInput.value ||
-      whatsappInput.value ||
-      telegramInput.value ||
-      snapchatInput.value ||
-      pinterestInput.value ||
-      githubInput.value ||
-      websiteInput.value ||
-      addressInput.value ||
-      facebookInput.value ||
-      youtubeInput.value ||
-      linkedinInput.value ||
-      instagramInput.value ||
-      twitterInput.value;
-
-    if (!any) {
-      alert("Please fill at least one field.");
-      generateBtn.disabled = false;
-      generateBtn.textContent = "Generate";
-      return;
-    }
-
-    let hasVcard = false;
-
-    // vCard only if phone exists
-    if (phone) {
-      try {
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, phone }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          vcardLinkOutput.value = data.link;
-          vcardOpenLink.href = data.link;
-          vcardResult.classList.remove("hidden");
-          hasVcard = true;
-        } else {
-          vcardResult.classList.add("hidden");
-          vcardLinkOutput.value = "";
-        }
-      } catch {
-        vcardResult.classList.add("hidden");
-        vcardLinkOutput.value = "";
-      }
-    } else {
-      vcardResult.classList.add("hidden");
-      vcardLinkOutput.value = "";
-    }
-
-    // Dynamic rows
-    multiOutput.innerHTML = "";
-    let anyOutput = false;
-
-    Object.entries(linkConfigs).forEach(([key, cfg]) => {
-      const raw = cfg.input();
-      if (!raw) return;
-
-      const link = cfg.build(raw);
-      if (!link) return;
-
-      anyOutput = true;
-
-      const row = document.createElement("div");
-      row.className = "output-row";
-
-      row.innerHTML = `
-        <div class="output-label">
-          <span class="small-circle">${cfg.icon}</span>
-          <span>${cfg.label}</span>
-        </div>
-        <input class="link-output" value="${link}" readonly />
-        <button class="copy-link-btn">Copy</button>
-      `;
-
-      multiOutput.appendChild(row);
-    });
-
-    outputsNote.textContent =
-      anyOutput || hasVcard
-        ? "Output generated. Copy any link or download the vCard."
-        : "No valid outputs yet. Try entering more fields.";
-
-    generateBtn.disabled = false;
-    generateBtn.textContent = "Generate";
-  });
+// Helper: normalize username-style values (remove leading @, spaces)
+function cleanHandle(value) {
+  return value.replace(/^@/, "").trim();
 }
 
-// Copy vCard link
-vcardCopyBtn.addEventListener("click", async () => {
-  if (!vcardLinkOutput.value) return;
-  await navigator.clipboard.writeText(vcardLinkOutput.value);
-  const old = vcardCopyBtn.textContent;
-  vcardCopyBtn.textContent = "Copied!";
-  setTimeout(() => (vcardCopyBtn.textContent = old), 1400);
-});
+// Helper: ensure URL has protocol
+function normalizeUrl(url) {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return "https://" + trimmed;
+}
 
-// Copy dynamic links
-multiOutput.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".copy-link-btn");
-  if (!btn) return;
-  const row = btn.closest(".output-row");
-  const input = row.querySelector(".link-output");
-  if (!input || !input.value) return;
+// Create one output row
+function addRow(iconText, labelText, link) {
+  const row = document.createElement("div");
+  row.className = "output-row";
 
-  await navigator.clipboard.writeText(input.value);
-  const old = btn.textContent;
-  btn.textContent = "Copied!";
-  setTimeout(() => (btn.textContent = old), 1400);
+  const label = document.createElement("div");
+  label.className = "output-label";
+  label.innerHTML = `
+    <span class="small-circle">${iconText}</span>
+    <span>${labelText}</span>
+  `;
+
+  const linkBox = document.createElement("div");
+  linkBox.className = "link-output";
+  linkBox.textContent = link;
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "copy-btn";
+  copyBtn.textContent = "Copy";
+  copyBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText(link);
+  });
+
+  row.appendChild(label);
+  row.appendChild(linkBox);
+  row.appendChild(copyBtn);
+  multiOutput.appendChild(row);
+}
+
+// Call backend to generate vCard link (only if mobile phone present)
+async function generateVcardLink(name, phone) {
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, phone })
+    });
+
+    if (!res.ok) throw new Error("Failed to generate vCard");
+    const data = await res.json();
+    const link = data.link;
+
+    vcardStatus.textContent = "Link ready";
+    vcardResult.classList.remove("hidden");
+
+    copyVcardUrl.onclick = () => {
+      navigator.clipboard.writeText(link);
+    };
+
+    downloadVcard.onclick = () => {
+      window.open(link, "_blank");
+    };
+  } catch (err) {
+    vcardStatus.textContent = "Error creating vCard";
+    vcardResult.classList.remove("hidden");
+    copyVcardUrl.onclick = null;
+    downloadVcard.onclick = null;
+  }
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  // Read all fields
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const telephone = document.getElementById("telephone").value.trim();
+  const email = document.getElementById("email").value.trim();
+
+  const whatsapp = document.getElementById("whatsapp").value.trim();
+  const telegram = cleanHandle(document.getElementById("telegram").value);
+  const snapchat = cleanHandle(document.getElementById("snapchat").value);
+  const pinterest = cleanHandle(document.getElementById("pinterest").value);
+  const github = cleanHandle(document.getElementById("github").value);
+  const website = normalizeUrl(document.getElementById("website").value);
+  const address = document.getElementById("address").value.trim();
+  const facebook = document.getElementById("facebook").value.trim();
+  const youtube = cleanHandle(document.getElementById("youtube").value);
+  const linkedin = document.getElementById("linkedin").value.trim();
+  const instagram = cleanHandle(document.getElementById("instagram").value);
+  const twitter = cleanHandle(document.getElementById("twitter").value);
+
+  // Clear previous outputs
+  multiOutput.innerHTML = "";
+
+  let anyOutput = false;
+
+  // Mobile phone
+  if (phone) {
+    const telLink = phone.startsWith("tel:") ? phone : `tel:${phone}`;
+    addRow("📱", "Mobile", telLink);
+    anyOutput = true;
+  }
+
+  // Landline
+  if (telephone) {
+    const telLink = telephone.startsWith("tel:") ? telephone : `tel:${telephone}`;
+    addRow("☎", "Landline", telLink);
+    anyOutput = true;
+  }
+
+  // Email
+  if (email) {
+    const mailLink = `mailto:${email}`;
+    addRow("✉", "Email", mailLink);
+    anyOutput = true;
+  }
+
+  // WhatsApp
+  if (whatsapp) {
+    const wa = whatsapp.replace(/\D/g, "");
+    if (wa) {
+      const waLink = `https://wa.me/${wa}`;
+      addRow("WA", "WhatsApp", waLink);
+      anyOutput = true;
+    }
+  }
+
+  // Telegram
+  if (telegram) {
+    const tgLink = `https://t.me/${telegram}`;
+    addRow("TG", "Telegram", tgLink);
+    anyOutput = true;
+  }
+
+  // Snapchat
+  if (snapchat) {
+    const scLink = `https://www.snapchat.com/add/${snapchat}`;
+    addRow("SC", "Snapchat", scLink);
+    anyOutput = true;
+  }
+
+  // Pinterest
+  if (pinterest) {
+    const pLink = `https://www.pinterest.com/${pinterest}/`;
+    addRow("P", "Pinterest", pLink);
+    anyOutput = true;
+  }
+
+  // GitHub
+  if (github) {
+    const ghLink = `https://github.com/${github}`;
+    addRow("GH", "GitHub", ghLink);
+    anyOutput = true;
+  }
+
+  // Website
+  if (website) {
+    addRow("www", "Website", website);
+    anyOutput = true;
+  }
+
+  // Maps
+  if (address) {
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      address
+    )}`;
+    addRow("📍", "Maps", mapsLink);
+    anyOutput = true;
+  }
+
+  // Facebook
+  if (facebook) {
+    const fbLink = /^https?:\/\//i.test(facebook)
+      ? facebook
+      : `https://www.facebook.com/${facebook}`;
+    addRow("f", "Facebook", fbLink);
+    anyOutput = true;
+  }
+
+  // YouTube
+  if (youtube) {
+    const ytLink = `https://www.youtube.com/${youtube.startsWith("@") ? "" : "@"}${youtube}`;
+    addRow("YT", "YouTube", ytLink);
+    anyOutput = true;
+  }
+
+  // LinkedIn
+  if (linkedin) {
+    const liLink = /^https?:\/\//i.test(linkedin)
+      ? linkedin
+      : `https://www.linkedin.com/in/${linkedin}`;
+    addRow("in", "LinkedIn", liLink);
+    anyOutput = true;
+  }
+
+  // Instagram
+  if (instagram) {
+    const igLink = `https://www.instagram.com/${instagram}`;
+    addRow("IG", "Instagram", igLink);
+    anyOutput = true;
+  }
+
+  // Twitter / X
+  if (twitter) {
+    const twLink = `https://twitter.com/${twitter}`;
+    addRow("X", "Twitter / X", twLink);
+    anyOutput = true;
+  }
+
+  // vCard: only if phone present
+  if (phone) {
+    await generateVcardLink(name, phone);
+    anyOutput = true;
+  } else {
+    vcardResult.classList.add("hidden");
+  }
+
+  // Update note
+  outputsNote.textContent = anyOutput
+    ? "Output generated. Copy any link or download the vCard."
+    : "Fill some fields above and click “Generate”.";
 });
