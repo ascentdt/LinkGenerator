@@ -9,12 +9,20 @@ const vcardStatus = document.getElementById("vcardStatus");
 const copyVcardUrl = document.getElementById("copyVcardUrl");
 const downloadVcard = document.getElementById("downloadVcard");
 
-// Helper: normalize username-style values (remove leading @, spaces)
+// PDF button
+const pdfButton = document.getElementById("download-pdf");
+
+// Store all current outputs (for PDF)
+let currentOutputs = [];
+
+/* ---------- Helpers ---------- */
+
+// Normalize @handles
 function cleanHandle(value) {
   return value.replace(/^@/, "").trim();
 }
 
-// Helper: ensure URL has protocol
+// Ensure URLs have protocol
 function normalizeUrl(url) {
   if (!url) return "";
   const trimmed = url.trim();
@@ -23,7 +31,7 @@ function normalizeUrl(url) {
   return "https://" + trimmed;
 }
 
-// Create one output row
+// Create one output row + save for PDF
 function addRow(iconText, labelText, link) {
   const row = document.createElement("div");
   row.className = "output-row";
@@ -50,9 +58,12 @@ function addRow(iconText, labelText, link) {
   row.appendChild(linkBox);
   row.appendChild(copyBtn);
   multiOutput.appendChild(row);
+
+  currentOutputs.push({ label: labelText, link });
 }
 
-// Call backend to generate vCard link (only if mobile phone present)
+/* ---------- vCard generation (backend) ---------- */
+
 async function generateVcardLink(name, phone) {
   try {
     const res = await fetch("/api/generate", {
@@ -62,6 +73,7 @@ async function generateVcardLink(name, phone) {
     });
 
     if (!res.ok) throw new Error("Failed to generate vCard");
+
     const data = await res.json();
     const link = data.link;
 
@@ -75,13 +87,64 @@ async function generateVcardLink(name, phone) {
     downloadVcard.onclick = () => {
       window.open(link, "_blank");
     };
+
+    // Put vCard at the top of PDF list
+    currentOutputs.unshift({ label: "vCard file", link });
   } catch (err) {
+    console.error(err);
     vcardStatus.textContent = "Error creating vCard";
     vcardResult.classList.remove("hidden");
     copyVcardUrl.onclick = null;
     downloadVcard.onclick = null;
   }
 }
+
+/* ---------- PDF export ---------- */
+
+function downloadPdf() {
+  if (!currentOutputs.length) {
+    alert("No links to export yet. Generate something first.");
+    return;
+  }
+
+  const jspdfLib = window.jspdf;
+  if (!jspdfLib || !jspdfLib.jsPDF) {
+    alert("PDF library failed to load. Please check your internet connection and try again.");
+    return;
+  }
+
+  const { jsPDF } = jspdfLib;
+  const doc = new jsPDF();
+
+  const marginLeft = 15;
+  let y = 18;
+
+  doc.setFontSize(16);
+  doc.text("Contact Link Studio – Links", marginLeft, y);
+  y += 10;
+
+  doc.setFontSize(11);
+
+  currentOutputs.forEach(({ label, link }) => {
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.text(`${label}:`, marginLeft, y);
+    const splitLink = doc.splitTextToSize(link, 180);
+    doc.text(splitLink, marginLeft, y + 5);
+    y += 12 + (splitLink.length - 1) * 5;
+  });
+
+  doc.save("contact-links.pdf");
+}
+
+if (pdfButton) {
+  pdfButton.addEventListener("click", downloadPdf);
+}
+
+/* ---------- Form submit / main logic ---------- */
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -105,8 +168,11 @@ form.addEventListener("submit", async (e) => {
   const instagram = cleanHandle(document.getElementById("instagram").value);
   const twitter = cleanHandle(document.getElementById("twitter").value);
 
-  // Clear previous outputs
+  // Reset outputs
   multiOutput.innerHTML = "";
+  vcardResult.classList.add("hidden");
+  currentOutputs = [];
+  if (pdfButton) pdfButton.classList.add("hidden");
 
   let anyOutput = false;
 
@@ -175,7 +241,7 @@ form.addEventListener("submit", async (e) => {
     anyOutput = true;
   }
 
-  // Maps
+  // Maps (address)
   if (address) {
     const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
       address
@@ -223,16 +289,19 @@ form.addEventListener("submit", async (e) => {
     anyOutput = true;
   }
 
-  // vCard: only if phone present
+  // vCard: only if mobile phone present
   if (phone) {
     await generateVcardLink(name, phone);
     anyOutput = true;
-  } else {
-    vcardResult.classList.add("hidden");
   }
 
-  // Update note
-  outputsNote.textContent = anyOutput
-    ? "Output generated. Copy any link or download the vCard."
-    : "Fill some fields above and click “Generate”.";
+  // Update note + PDF button visibility
+  if (anyOutput) {
+    outputsNote.textContent =
+      "Output generated. Copy any link, download the vCard, or export everything as PDF.";
+    if (pdfButton) pdfButton.classList.remove("hidden");
+  } else {
+    outputsNote.textContent = "Fill some fields above and click “Generate”.";
+    if (pdfButton) pdfButton.classList.add("hidden");
+  }
 });

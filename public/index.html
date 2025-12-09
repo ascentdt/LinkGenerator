@@ -54,7 +54,7 @@
 
               <label class="field">
                 <span class="label">Mobile (for vCard & call)</span>
-                <input type="tel" id="phone" placeholder="+1 240 214 1863" />
+                <input type="tel" id="phone" placeholder="+1 862 391 8345" />
               </label>
 
               <label class="field">
@@ -146,7 +146,12 @@
               Fill some fields above and click “Generate”.
             </p>
 
-            <!-- vCard row – same UI style as other rows -->
+            <!-- PDF export button -->
+            <button id="download-pdf" class="secondary-btn hidden">
+              Download all as PDF
+            </button>
+
+            <!-- vCard row (same style as other rows) -->
             <div id="vcardResult" class="result hidden">
               <div class="output-row">
                 <div class="output-label">
@@ -163,7 +168,7 @@
               </div>
             </div>
 
-            <!-- dynamically created rows -->
+            <!-- generated link rows -->
             <div class="multi-output" id="multi-output"></div>
           </section>
 
@@ -179,6 +184,8 @@
     </div>
   </footer>
 
+  <!-- jsPDF + app -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
