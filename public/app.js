@@ -1,307 +1,398 @@
-// Grab form and output containers
+// app.js
+
+// --------- DOM REFERENCES ---------
 const form = document.getElementById("generator-form");
-const outputsNote = document.getElementById("outputs-note");
 const multiOutput = document.getElementById("multi-output");
 
-// vCard elements
-const vcardResult = document.getElementById("vcardResult");
-const vcardStatus = document.getElementById("vcardStatus");
-const copyVcardUrl = document.getElementById("copyVcardUrl");
-const downloadVcard = document.getElementById("downloadVcard");
+const vcardRow = document.getElementById("result");
+const vcardStatusEl = document.getElementById("vcard-status");
+const vcardLinkHidden = document.getElementById("link-output");
+const vcardCopyBtn = document.getElementById("copy-btn");
+const vcardDownloadBtn = document.getElementById("download-vcard-btn");
 
-// PDF button
-const pdfButton = document.getElementById("download-pdf");
+const pdfBtn = document.getElementById("download-pdf");
 
-// Store all current outputs (for PDF)
-let currentOutputs = [];
+// state for PDF naming + links
+let currentNameForFiles = "";
+let currentOutputs = [];   // { label, value, link }
+let currentVcardUrl = "";
 
-/* ---------- Helpers ---------- */
+// --------- HELPERS ---------
 
-// Normalize @handles
-function cleanHandle(value) {
-  return value.replace(/^@/, "").trim();
+function getValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
 }
 
-// Ensure URLs have protocol
-function normalizeUrl(url) {
+function buildTelLink(num) {
+  let n = num.trim();
+  // If already starts with tel: leave as-is
+  if (n.toLowerCase().startsWith("tel:")) return n;
+  // If starts with + keep it
+  if (!n.startsWith("+")) {
+    n = "+".concat(n.replace(/\s+/g, ""));
+  }
+  return `tel:${n}`;
+}
+
+function ensureHttp(url) {
   if (!url) return "";
-  const trimmed = url.trim();
-  if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return "https://" + trimmed;
+  if (/^https?:\/\//i.test(url)) return url;
+  return "https://" + url;
 }
 
-// Create one output row + save for PDF
-function addRow(iconText, labelText, link) {
+function stripAt(text) {
+  return text.replace(/^@+/, "");
+}
+
+/**
+ * Adds a visual row + stores for PDF.
+ * label: "Mobile"
+ * iconText: short label inside circle ("📱" or "WA" etc.)
+ * display: text to show in UI (usually the link)
+ * linkToCopy: what is copied to clipboard (defaults to display)
+ */
+function addOutputRow(label, iconText, display, linkToCopy) {
+  if (!display) return;
+
   const row = document.createElement("div");
   row.className = "output-row";
 
-  const label = document.createElement("div");
-  label.className = "output-label";
-  label.innerHTML = `
-    <span class="small-circle">${iconText}</span>
-    <span>${labelText}</span>
-  `;
+  const left = document.createElement("div");
+  left.className = "output-left";
 
-  const linkBox = document.createElement("div");
-  linkBox.className = "link-output";
-  linkBox.textContent = link;
+  const circle = document.createElement("div");
+  circle.className = "small-circle";
+  circle.textContent = iconText;
+
+  const textWrap = document.createElement("div");
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "output-label-text";
+  titleEl.textContent = label;
+
+  const valueEl = document.createElement("div");
+  valueEl.className = "output-value";
+  valueEl.textContent = display;
+
+  textWrap.appendChild(titleEl);
+  textWrap.appendChild(valueEl);
+
+  left.appendChild(circle);
+  left.appendChild(textWrap);
+
+  const actions = document.createElement("div");
+  actions.className = "output-actions";
 
   const copyBtn = document.createElement("button");
   copyBtn.className = "copy-btn";
   copyBtn.textContent = "Copy";
   copyBtn.addEventListener("click", () => {
-    navigator.clipboard.writeText(link);
+    navigator.clipboard
+      .writeText(linkToCopy || display)
+      .catch((err) => console.error("Copy failed", err));
   });
 
-  row.appendChild(label);
-  row.appendChild(linkBox);
-  row.appendChild(copyBtn);
+  actions.appendChild(copyBtn);
+
+  row.appendChild(left);
+  row.appendChild(actions);
+
   multiOutput.appendChild(row);
 
-  currentOutputs.push({ label: labelText, link });
+  currentOutputs.push({
+    label,
+    value: display,
+    link: linkToCopy || display,
+  });
 }
 
-/* ---------- vCard generation (backend) ---------- */
-
+/**
+ * Call backend to generate vCard URL.
+ */
 async function generateVcardLink(name, phone) {
   try {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone })
+      body: JSON.stringify({ name, phone }),
     });
 
-    if (!res.ok) throw new Error("Failed to generate vCard");
+    if (!res.ok) {
+      throw new Error("Failed to generate vCard");
+    }
 
     const data = await res.json();
     const link = data.link;
 
-    vcardStatus.textContent = "Link ready";
-    vcardResult.classList.remove("hidden");
-
-    copyVcardUrl.onclick = () => {
-      navigator.clipboard.writeText(link);
-    };
-
-    downloadVcard.onclick = () => {
-      window.open(link, "_blank");
-    };
-
-    // Put vCard at the top of PDF list
-    currentOutputs.unshift({ label: "vCard file", link });
+    currentVcardUrl = link;
+    vcardLinkHidden.value = link;
+    vcardStatusEl.textContent = "Link ready";
+    vcardRow.classList.remove("hidden");
   } catch (err) {
     console.error(err);
-    vcardStatus.textContent = "Error creating vCard";
-    vcardResult.classList.remove("hidden");
-    copyVcardUrl.onclick = null;
-    downloadVcard.onclick = null;
+    currentVcardUrl = "";
+    vcardLinkHidden.value = "";
+    vcardStatusEl.textContent = "Error generating vCard";
+    vcardRow.classList.remove("hidden");
   }
 }
 
-/* ---------- PDF export ---------- */
-
-function downloadPdf() {
-  if (!currentOutputs.length) {
-    alert("No links to export yet. Generate something first.");
-    return;
-  }
-
-  const jspdfLib = window.jspdf;
-  if (!jspdfLib || !jspdfLib.jsPDF) {
-    alert("PDF library failed to load. Please check your internet connection and try again.");
-    return;
-  }
-
-  const { jsPDF } = jspdfLib;
-  const doc = new jsPDF();
-
-  const marginLeft = 15;
-  let y = 18;
-
-  doc.setFontSize(16);
-  doc.text("Contact Link Studio – Links", marginLeft, y);
-  y += 10;
-
-  doc.setFontSize(11);
-
-  currentOutputs.forEach(({ label, link }) => {
-    if (y > 270) {
-      doc.addPage();
-      y = 20;
-    }
-
-    doc.text(`${label}:`, marginLeft, y);
-    const splitLink = doc.splitTextToSize(link, 180);
-    doc.text(splitLink, marginLeft, y + 5);
-    y += 12 + (splitLink.length - 1) * 5;
-  });
-
-  doc.save("contact-links.pdf");
-}
-
-if (pdfButton) {
-  pdfButton.addEventListener("click", downloadPdf);
-}
-
-/* ---------- Form submit / main logic ---------- */
+// --------- EVENT: FORM SUBMIT ---------
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Read all fields
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const telephone = document.getElementById("telephone").value.trim();
-  const email = document.getElementById("email").value.trim();
+  // read values
+  const name = getValue("name");
+  const phone = getValue("phone");
+  const telephone = getValue("telephone");
+  const email = getValue("email");
 
-  const whatsapp = document.getElementById("whatsapp").value.trim();
-  const telegram = cleanHandle(document.getElementById("telegram").value);
-  const snapchat = cleanHandle(document.getElementById("snapchat").value);
-  const pinterest = cleanHandle(document.getElementById("pinterest").value);
-  const github = cleanHandle(document.getElementById("github").value);
-  const website = normalizeUrl(document.getElementById("website").value);
-  const address = document.getElementById("address").value.trim();
-  const facebook = document.getElementById("facebook").value.trim();
-  const youtube = cleanHandle(document.getElementById("youtube").value);
-  const linkedin = document.getElementById("linkedin").value.trim();
-  const instagram = cleanHandle(document.getElementById("instagram").value);
-  const twitter = cleanHandle(document.getElementById("twitter").value);
+  const whatsapp = getValue("whatsapp");
+  const telegram = getValue("telegram");
+  const snapchat = getValue("snapchat");
+  const pinterest = getValue("pinterest");
+  const github = getValue("github");
+  const website = getValue("website");
+  const address = getValue("address");
+  const facebook = getValue("facebook");
+  const youtube = getValue("youtube");
+  const linkedin = getValue("linkedin");
+  const instagram = getValue("instagram");
+  const twitter = getValue("twitter");
 
-  // Reset outputs
-  multiOutput.innerHTML = "";
-  vcardResult.classList.add("hidden");
+  currentNameForFiles = name || "Contact";
   currentOutputs = [];
-  if (pdfButton) pdfButton.classList.add("hidden");
+  multiOutput.innerHTML = "";
 
-  let anyOutput = false;
-
-  // Mobile phone
+  // ------- PHONE / CALLS -------
   if (phone) {
-    const telLink = phone.startsWith("tel:") ? phone : `tel:${phone}`;
-    addRow("📱", "Mobile", telLink);
-    anyOutput = true;
+    const telLink = buildTelLink(phone);
+    addOutputRow("Mobile", "📱", telLink, telLink);
   }
 
-  // Landline
   if (telephone) {
-    const telLink = telephone.startsWith("tel:") ? telephone : `tel:${telephone}`;
-    addRow("☎", "Landline", telLink);
-    anyOutput = true;
+    const telLandline = buildTelLink(telephone);
+    addOutputRow("Landline", "☎", telLandline, telLandline);
   }
 
-  // Email
+  // ------- EMAIL -------
   if (email) {
     const mailLink = `mailto:${email}`;
-    addRow("✉", "Email", mailLink);
-    anyOutput = true;
+    addOutputRow("Email", "✉", mailLink, mailLink);
   }
 
-  // WhatsApp
+  // ------- WHATSAPP -------
   if (whatsapp) {
-    const wa = whatsapp.replace(/\D/g, "");
-    if (wa) {
-      const waLink = `https://wa.me/${wa}`;
-      addRow("WA", "WhatsApp", waLink);
-      anyOutput = true;
+    const digits = whatsapp.replace(/[^\d]/g, "");
+    if (digits) {
+      const waLink = `https://wa.me/${digits}`;
+      addOutputRow("WhatsApp", "WA", waLink, waLink);
     }
   }
 
-  // Telegram
+  // ------- TELEGRAM -------
   if (telegram) {
-    const tgLink = `https://t.me/${telegram}`;
-    addRow("TG", "Telegram", tgLink);
-    anyOutput = true;
+    const user = stripAt(telegram);
+    const tgLink = `https://t.me/${user}`;
+    addOutputRow("Telegram", "TG", tgLink, tgLink);
   }
 
-  // Snapchat
+  // ------- SNAPCHAT -------
   if (snapchat) {
-    const scLink = `https://www.snapchat.com/add/${snapchat}`;
-    addRow("SC", "Snapchat", scLink);
-    anyOutput = true;
+    const scUser = stripAt(snapchat);
+    const scLink = `https://www.snapchat.com/add/${scUser}`;
+    addOutputRow("Snapchat", "SC", scLink, scLink);
   }
 
-  // Pinterest
+  // ------- PINTEREST -------
   if (pinterest) {
-    const pLink = `https://www.pinterest.com/${pinterest}/`;
-    addRow("P", "Pinterest", pLink);
-    anyOutput = true;
+    const pUser = stripAt(pinterest);
+    const pLink = `https://www.pinterest.com/${pUser}`;
+    addOutputRow("Pinterest", "P", pLink, pLink);
   }
 
-  // GitHub
+  // ------- GITHUB -------
   if (github) {
-    const ghLink = `https://github.com/${github}`;
-    addRow("GH", "GitHub", ghLink);
-    anyOutput = true;
+    const ghUser = stripAt(github);
+    const ghLink = `https://github.com/${ghUser}`;
+    addOutputRow("GitHub", "GH", ghLink, ghLink);
   }
 
-  // Website
+  // ------- WEBSITE -------
   if (website) {
-    addRow("www", "Website", website);
-    anyOutput = true;
+    const siteLink = ensureHttp(website);
+    addOutputRow("Website", "🌐", siteLink, siteLink);
   }
 
-  // Maps (address)
+  // ------- MAPS / ADDRESS -------
   if (address) {
-    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      address
-    )}`;
-    addRow("📍", "Maps", mapsLink);
-    anyOutput = true;
+    const mapsLink =
+      "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(address);
+    addOutputRow("Maps", "📍", mapsLink, mapsLink);
   }
 
-  // Facebook
+  // ------- FACEBOOK -------
   if (facebook) {
-    const fbLink = /^https?:\/\//i.test(facebook)
-      ? facebook
-      : `https://www.facebook.com/${facebook}`;
-    addRow("f", "Facebook", fbLink);
-    anyOutput = true;
+    let fb = facebook.trim();
+    if (!/^https?:\/\//i.test(fb)) {
+      fb = `https://www.facebook.com/${fb}`;
+    }
+    addOutputRow("Facebook", "f", fb, fb);
   }
 
-  // YouTube
+  // ------- YOUTUBE -------
   if (youtube) {
-    const ytLink = `https://www.youtube.com/${youtube.startsWith("@") ? "" : "@"}${youtube}`;
-    addRow("YT", "YouTube", ytLink);
-    anyOutput = true;
+    let yt = youtube.trim();
+    if (!/^https?:\/\//i.test(yt)) {
+      yt = `https://www.youtube.com/${yt}`;
+    }
+    addOutputRow("YouTube", "YT", yt, yt);
   }
 
-  // LinkedIn
+  // ------- LINKEDIN -------
   if (linkedin) {
-    const liLink = /^https?:\/\//i.test(linkedin)
-      ? linkedin
-      : `https://www.linkedin.com/in/${linkedin}`;
-    addRow("in", "LinkedIn", liLink);
-    anyOutput = true;
+    let li = linkedin.trim();
+    if (!/^https?:\/\//i.test(li)) {
+      li = `https://www.linkedin.com/in/${li}`;
+    }
+    addOutputRow("LinkedIn", "in", li, li);
   }
 
-  // Instagram
+  // ------- INSTAGRAM -------
   if (instagram) {
-    const igLink = `https://www.instagram.com/${instagram}`;
-    addRow("IG", "Instagram", igLink);
-    anyOutput = true;
+    const igUser = stripAt(instagram);
+    const igLink = `https://www.instagram.com/${igUser}/`;
+    addOutputRow("Instagram", "IG", igLink, igLink);
   }
 
-  // Twitter / X
+  // ------- TWITTER / X -------
   if (twitter) {
-    const twLink = `https://twitter.com/${twitter}`;
-    addRow("X", "Twitter / X", twLink);
-    anyOutput = true;
+    const twUser = stripAt(twitter);
+    const twLink = `https://twitter.com/${twUser}`;
+    addOutputRow("Twitter / X", "X", twLink, twLink);
   }
 
-  // vCard: only if mobile phone present
+  // ------- vCard (server) -------
+    // ------- vCard (server) -------
   if (phone) {
     await generateVcardLink(name, phone);
-    anyOutput = true;
+  } else {
+    // hide vCard row if no phone
+    vcardRow.classList.add("hidden");
+    currentVcardUrl = "";
+    vcardLinkHidden.value = "";
   }
 
-  // Update note + PDF button visibility
-  if (anyOutput) {
-    outputsNote.textContent =
-      "Output generated. Copy any link, download the vCard, or export everything as PDF.";
-    if (pdfButton) pdfButton.classList.remove("hidden");
-  } else {
-    outputsNote.textContent = "Fill some fields above and click “Generate”.";
-    if (pdfButton) pdfButton.classList.add("hidden");
+  // ------- Show / hide PDF button based on outputs -------
+  if (pdfBtn) {
+    if (currentOutputs.length || currentVcardUrl) {
+      pdfBtn.classList.remove("hidden");
+    } else {
+      pdfBtn.classList.add("hidden");
+    }
   }
 });
+
+
+
+// --------- vCard buttons (Copy / Download) ---------
+
+vcardCopyBtn.addEventListener("click", () => {
+  const link = vcardLinkHidden.value;
+  if (!link) return;
+  navigator.clipboard
+    .writeText(link)
+    .catch((err) => console.error("Copy vCard failed", err));
+});
+
+vcardDownloadBtn.addEventListener("click", () => {
+  const link = vcardLinkHidden.value;
+  if (!link) return;
+  window.open(link, "_blank");
+});
+
+// --------- PDF DOWNLOAD ---------
+
+if (pdfBtn) {
+  pdfBtn.addEventListener("click", () => {
+    if (!currentOutputs.length && !currentVcardUrl) {
+      alert("Generate at least one link first.");
+      return;
+    }
+
+    const jspdfGlobal = window.jspdf;
+    if (!jspdfGlobal || !jspdfGlobal.jsPDF) {
+      alert("PDF library not loaded.");
+      return;
+    }
+
+    const { jsPDF } = jspdfGlobal;
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "a4",
+    });
+
+    const safeName = (currentNameForFiles || "Contact")
+      .toString()
+      .trim()
+      .replace(/\s+/g, "") || "Contact";
+
+    // Title
+    let y = 60;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(`${currentNameForFiles || "Contact"} – Contact Links`, 40, y);
+    y += 24;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text("Generated by Contact Link Studio", 40, y);
+    y += 30;
+
+    // Table header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Field", 40, y);
+    doc.text("Value / Link", 160, y);
+    y += 8;
+    doc.setLineWidth(0.5);
+    doc.line(40, y, 555, y);
+    y += 16;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+
+    // Build rows: include vCard (if present) at top
+    const rows = [];
+    if (currentVcardUrl) {
+      rows.push({ label: "vCard file", value: currentVcardUrl });
+    }
+    currentOutputs.forEach((row) => {
+      rows.push({ label: row.label, value: row.value });
+    });
+
+    const maxWidth = 380;
+
+    rows.forEach((row) => {
+      if (y > 760) {
+        doc.addPage();
+        y = 60;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.text(row.label, 40, y);
+
+      doc.setFont("helvetica", "normal");
+      const lines = doc.splitTextToSize(row.value, maxWidth);
+      doc.text(lines, 160, y);
+
+      y += 18 + (lines.length - 1) * 14;
+    });
+
+    doc.save(`${safeName}_links.pdf`);
+  });
+}

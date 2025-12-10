@@ -5,9 +5,7 @@
   <title>Contact Link Studio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Favicon -->
   <link rel="icon" href="/favicon.png" type="image/png" />
-
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
@@ -31,11 +29,10 @@
           <header class="card-header">
             <h1 class="title">Contact & Social Link Generator</h1>
             <p class="subtitle">
-              Enter any details you want. We’ll generate a downloadable vCard plus
-              links for calls, WhatsApp, Telegram, GitHub, and more.
+              Enter any details you want. We’ll generate a vCard plus personalized links for calls, WhatsApp, Telegram, GitHub, and more.
             </p>
             <div class="chip-row">
-              <span class="chip">vCard file</span>
+              <span class="chip">vCard</span>
               <span class="chip">Call links</span>
               <span class="chip">Social profiles</span>
             </div>
@@ -54,7 +51,7 @@
 
               <label class="field">
                 <span class="label">Mobile (for vCard & call)</span>
-                <input type="tel" id="phone" placeholder="+1 862 391 8345" />
+                <input type="tel" id="phone" placeholder="+1 862 513 8765" />
               </label>
 
               <label class="field">
@@ -73,27 +70,27 @@
 
               <label class="field">
                 <span class="label">WhatsApp (country code)</span>
-                <input type="text" id="whatsapp" placeholder="e.g. 919225248070" />
+                <input type="text" id="whatsapp" placeholder="919225248070" />
               </label>
 
               <label class="field">
                 <span class="label">Telegram username</span>
-                <input type="text" id="telegram" placeholder="e.g. satyam" />
+                <input type="text" id="telegram" placeholder="alyssa" />
               </label>
 
               <label class="field">
                 <span class="label">Snapchat username</span>
-                <input type="text" id="snapchat" placeholder="e.g. yourname" />
+                <input type="text" id="snapchat" placeholder="yourname" />
               </label>
 
               <label class="field">
                 <span class="label">Pinterest username</span>
-                <input type="text" id="pinterest" placeholder="e.g. mypinprofile" />
+                <input type="text" id="pinterest" placeholder="mypins" />
               </label>
 
               <label class="field">
                 <span class="label">GitHub username</span>
-                <input type="text" id="github" placeholder="e.g. satyamdev" />
+                <input type="text" id="github" placeholder="username" />
               </label>
 
               <label class="field">
@@ -107,7 +104,7 @@
               </label>
 
               <label class="field">
-                <span class="label">Facebook handle</span>
+                <span class="label">Facebook</span>
                 <input type="text" id="facebook" placeholder="your.page" />
               </label>
 
@@ -117,8 +114,8 @@
               </label>
 
               <label class="field">
-                <span class="label">LinkedIn handle</span>
-                <input type="text" id="linkedin" placeholder="your-profile" />
+                <span class="label">LinkedIn</span>
+                <input type="text" id="linkedin" placeholder="profile-id" />
               </label>
 
               <label class="field">
@@ -128,45 +125,44 @@
 
               <label class="field">
                 <span class="label">Twitter / X username</span>
-                <input type="text" id="twitter" placeholder="yourhandle" />
+                <input type="text" id="twitter" placeholder="handle" />
               </label>
             </section>
 
             <div class="form-actions">
-              <button type="submit" id="generate-btn" class="button">
-                Generate
-              </button>
+              <button type="submit" id="generate-btn" class="button">Generate</button>
             </div>
           </form>
 
           <!-- OUTPUTS -->
           <section class="outputs">
             <h3 class="outputs-title">Generated outputs</h3>
-            <p class="outputs-note" id="outputs-note">
-              Fill some fields above and click “Generate”.
-            </p>
+            <p class="outputs-note" id="outputs-note">Fill some fields above and click “Generate”.</p>
 
             <!-- PDF export button -->
             <button id="download-pdf" class="secondary-btn hidden">
               Download all as PDF
             </button>
 
-            <!-- vCard row (same style as other rows) -->
-            <div id="vcardResult" class="result hidden">
-              <div class="output-row">
-                <div class="output-label">
-                  <span class="small-circle">VC</span>
-                  <span>vCard file</span>
-                </div>
+            <!-- vCard row -->
+            <!-- vCard row (same style as others) -->
+<div id="result" class="output-row hidden">
+  <div class="output-left">
+    <div class="small-circle">VC</div>
+    <div>
+      <div class="output-label-text">vCard file</div>
+      <div class="output-value" id="vcard-status">Link ready</div>
+    </div>
+  </div>
 
-                <div class="link-output" id="vcardStatus">
-                  vCard link ready
-                </div>
+  <div class="output-actions">
+    <button id="copy-btn" class="copy-btn">Copy</button>
+    <button id="download-vcard-btn" class="open-btn">Download</button>
+  </div>
 
-                <button class="copy-btn" id="copyVcardUrl">Copy</button>
-                <button class="open-btn" id="downloadVcard">Download</button>
-              </div>
-            </div>
+  <input type="hidden" id="link-output" />
+</div>
+
 
             <!-- generated link rows -->
             <div class="multi-output" id="multi-output"></div>
@@ -184,7 +180,7 @@
     </div>
   </footer>
 
-  <!-- jsPDF + app -->
+  <!-- jsPDF + App Script -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="./app.js"></script>
 </body>
