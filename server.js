@@ -1,3 +1,49 @@
+// server.js
+const express = require("express");
+const path = require("path");
+const crypto = require("crypto");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// When running behind a proxy (Render, etc.) this lets req.protocol be "https"
+app.set("trust proxy", true);
+
+// In-memory store: id → { phone, name }
+const store = new Map();
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+// Helper to create a random id
+function generateId() {
+  return crypto.randomBytes(8).toString("hex");
+}
+
+// POST /api/generate -> create unique link for given phone (and optional name)
+app.post("/api/generate", (req, res) => {
+  const { phone, name } = req.body || {};
+
+  if (!phone || typeof phone !== "string" || !phone.trim()) {
+    return res.status(400).json({ error: "Phone number is required." });
+  }
+
+  const id = generateId();
+  const cleanPhone = phone.trim();
+  const displayName = (name || "").trim() || "My Contact";
+
+  store.set(id, {
+    phone: cleanPhone,
+    name: displayName,
+  });
+
+  // Base URL works both locally and on Render
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const link = `${baseUrl}/vcard/${id}`;
+
+  return res.json({ id, link });
+});
+
 // GET /vcard/:id -> download VCF file
 app.get("/vcard/:id", (req, res) => {
   const data = store.get(req.params.id);
@@ -18,22 +64,16 @@ app.get("/vcard/:id", (req, res) => {
     "",
   ].join("\r\n");
 
-  // Build safe filename from the stored name
-  let safeName = (name || "").toString().trim();
-  if (safeName) {
-    safeName = safeName
-      .replace(/\s+/g, "")      // remove spaces
-      .replace(/[^\w\-]/g, ""); // remove weird chars
-  }
-  if (!safeName) {
-    safeName = "contact";
-  }
+  // filename based on name (no spaces); fallback "contact.vcf"
+  let safeName = (name || "contact").toString().trim().replace(/\s+/g, "");
+  if (!safeName) safeName = "contact";
   const fileName = `${safeName}.vcf`;
 
-  // 👇 LOG so we can see what the server thinks
-  console.log("VCARD DOWNLOAD → name:", name, "| safeName:", safeName, "| fileName:", fileName);
-
-  res.setHeader("Content-Type", "text/vcard; charset=utf-8");
+  res.setHeader("Content-Type", 'text/vcard; charset=utf-8');
   res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
   return res.send(vcard);
+});
+
+app.listen(PORT, () => {
+  console.log(`VCF generator running on port ${PORT}`);
 });
