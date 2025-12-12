@@ -1,4 +1,23 @@
 /* ------------------------------
+   COLOR TOKENS (moodboard)
+------------------------------ */
+:root {
+  --bg: #24293e;
+  --bg-soft: #1f2436;
+  --bg-elevated: #1b2031;
+
+  --accent: #8ebbff;
+  --accent-soft: rgba(142, 187, 255, 0.15);
+
+  --text-main: #f4f5fc;
+  --text-muted: #c7c9e4;
+  --text-soft: #9aa0c4;
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(142, 187, 255, 0.35);
+}
+
+/* ------------------------------
    Base Layout
 ------------------------------ */
 * {
@@ -8,9 +27,9 @@
 }
 
 body {
-  font-family: "Inter", sans-serif;
-  background: radial-gradient(circle at top, #0b1220, #050914 70%);
-  color: #d9e6ff;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at top, #353d5a 0, var(--bg) 45%, #181b29 100%);
+  color: var(--text-main);
   line-height: 1.5;
   padding-bottom: 120px;
 }
@@ -26,15 +45,23 @@ body {
 /* ------------------------------
    HEADER
 ------------------------------ */
+/* ------------------------------
+   HEADER (Clean, Professional)
+------------------------------ */
 .site-header {
   width: 100%;
-  padding: 20px 0;
+  padding: 24px 0;
   position: sticky;
   top: 0;
-  background: rgba(5, 10, 20, 0.65);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(0, 255, 120, 0.1);
   z-index: 20;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 18, 34, 0.95),
+    rgba(15, 18, 34, 0.65)
+  );
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(142, 187, 255, 0.15);
 }
 
 .header-inner {
@@ -43,25 +70,42 @@ body {
   align-items: center;
 }
 
-.brand {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
+/* Remove the circle dot */
 .brand-mark {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #00ff99;
-  box-shadow: 0px 0px 8px #00ff99;
+  display: none !important;
 }
 
+/* Clean, simple, premium title */
 .brand-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #eafff5;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-main);
+  position: relative;
+  padding-bottom: 6px;
 }
+
+/* Subtle underline highlight */
+.brand-text::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 60%;
+  height: 2px;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--accent),
+    transparent
+  );
+  opacity: 0.75;
+}
+
 
 /* ------------------------------
    MAIN CARD + FRAME
@@ -73,18 +117,20 @@ body {
 }
 
 .frame {
-  width: min(60vw, 1100px);     /* ~60% of screen on desktop */
+  width: min(60vw, 1100px);
   min-width: 360px;
   margin: auto;
 }
 
 .card {
-  background: rgba(10, 18, 35, 0.7);
-  border: 1px solid rgba(0, 255, 120, 0.15);
+  background: radial-gradient(circle at top, #2d3550 0, var(--bg-soft) 50%, var(--bg-elevated) 100%);
+  border: 1px solid var(--border-subtle);
   padding: 40px;
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0px 0px 40px rgba(0, 255, 120, 0.05);
+  border-radius: 26px;
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 22px 45px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 /* ------------------------------
@@ -98,7 +144,7 @@ body {
 .title {
   font-size: 28px;
   font-weight: 700;
-  color: #eafff5;
+  color: var(--text-main);
   margin-bottom: 8px;
 }
 
@@ -106,7 +152,7 @@ body {
   font-size: 14px;
   max-width: 640px;
   margin: 0 auto 14px auto;
-  color: #88a3c6;
+  color: var(--text-soft);
 }
 
 .chip-row {
@@ -119,11 +165,11 @@ body {
 
 .chip {
   padding: 5px 12px;
-  border-radius: 12px;
-  background: rgba(0, 255, 120, 0.12);
-  color: #00ff99;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: 12px;
-  border: 1px solid rgba(0, 255, 120, 0.25);
+  border: 1px solid rgba(142, 187, 255, 0.45);
 }
 
 /* ------------------------------
@@ -138,8 +184,9 @@ body {
 .form-section-title {
   font-size: 15px;
   margin-bottom: 10px;
-  color: #00ffb3;
+  color: var(--accent);
   font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .field {
@@ -151,23 +198,29 @@ body {
 .label {
   font-size: 13px;
   margin-bottom: 4px;
-  color: #9db4d4;
+  color: var(--text-soft);
 }
 
 input {
   width: 100%;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(0, 255, 120, 0.12);
-  border-radius: 10px;
-  color: #eafff5;
+  background: rgba(7, 9, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  color: var(--text-main);
   font-size: 14px;
+  transition: border 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+input::placeholder {
+  color: rgba(199, 201, 228, 0.58);
 }
 
 input:focus {
   outline: none;
-  border-color: #00ff99;
-  box-shadow: 0px 0px 10px rgba(0, 255, 120, 0.3);
+  border-color: var(--accent);
+  background: rgba(11, 15, 31, 0.98);
+  box-shadow: 0 0 0 1px rgba(142, 187, 255, 0.5);
 }
 
 /* ------------------------------
@@ -180,21 +233,26 @@ input:focus {
 }
 
 .button {
-  padding: 12px 35px;
-  background: #00ff99;
+  padding: 12px 40px;
+  background: var(--accent);
   border: none;
-  border-radius: 30px;
-  color: #001a0f;
+  border-radius: 999px;
+  color: #111320;
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
-  box-shadow: 0px 0px 15px rgba(0, 255, 120, 0.3);
-  transition: 0.25s ease;
+  box-shadow: 0 16px 30px rgba(142, 187, 255, 0.35);
+  transition: 0.22s ease;
 }
 
 .button:hover {
-  transform: translateY(-2px);
-  background: #00ffaa;
+  transform: translateY(-1px);
+  box-shadow: 0 20px 40px rgba(142, 187, 255, 0.5);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 10px 22px rgba(142, 187, 255, 0.35);
 }
 
 /* ------------------------------
@@ -208,21 +266,21 @@ input:focus {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #eafff5;
+  color: var(--text-main);
 }
 
 .outputs-note {
   font-size: 13px;
-  color: #87a1bf;
+  color: var(--text-soft);
   margin-bottom: 12px;
 }
 
-/* vCard & output cards */
+/* vCard & other output rows */
 .output-row {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(0, 255, 120, 0.12);
+  background: rgba(11, 14, 29, 0.9);
+  border: 1px solid var(--border-subtle);
   padding: 16px 18px;
-  border-radius: 14px;
+  border-radius: 16px;
   margin-bottom: 12px;
 
   display: flex;
@@ -231,35 +289,36 @@ input:focus {
   gap: 12px;
 }
 
-/* Left side of row */
 .output-left {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
+/* little icon circle */
 .small-circle {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: rgba(0, 255, 120, 0.16);
-  border: 1px solid rgba(0, 255, 120, 0.4);
+  background: radial-gradient(circle at top, var(--accent) 0, #4b76c4 45%, #202744 100%);
+  border: 1px solid var(--border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #00ffb0;
+  color: var(--text-main);
+  box-shadow: 0 0 8px rgba(142, 187, 255, 0.55);
 }
 
 .output-label-text {
   font-size: 13px;
-  color: #9fb7d6;
+  color: var(--text-soft);
 }
 
 .output-value {
   font-size: 14px;
-  color: #cde7ff;
-  word-break: break-word;   /* wrap long URLs on phones */
+  color: var(--text-main);
+  word-break: break-word; /* wrap long URLs */
 }
 
 /* Right side (buttons) */
@@ -272,17 +331,20 @@ input:focus {
 .copy-btn,
 .open-btn {
   padding: 8px 18px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 255, 120, 0.25);
-  background: rgba(255, 255, 255, 0.05);
-  color: #d9ffe8;
+  border-radius: 999px;
+  border: 1px solid rgba(142, 187, 255, 0.45);
+  background: rgba(27, 33, 58, 0.95);
+  color: var(--text-main);
   cursor: pointer;
   font-size: 13px;
+  transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
 }
 
 .copy-btn:hover,
 .open-btn:hover {
-  background: rgba(0, 255, 120, 0.12);
+  background: rgba(142, 187, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 
 /* PDF Button */
@@ -291,16 +353,21 @@ input:focus {
   width: 100%;
   padding: 12px;
   text-align: center;
-  border-radius: 12px;
-  background: rgba(0, 255, 120, 0.15);
-  color: #00ffb0;
+  border-radius: 999px;
+  background: rgba(142, 187, 255, 0.14);
+  color: var(--accent);
   font-weight: 600;
-  border: 1px solid rgba(0, 255, 120, 0.25);
+  border: 1px solid rgba(142, 187, 255, 0.45);
   cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 #download-pdf:hover {
-  background: rgba(0, 255, 120, 0.25);
+  background: rgba(142, 187, 255, 0.22);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
 }
 
 /* ------------------------------
@@ -310,43 +377,36 @@ input:focus {
   margin-top: 50px;
   padding: 25px 0;
   text-align: center;
-  color: #6d8098;
+  color: var(--text-soft);
   font-size: 13px;
 }
 
 /* ------------------------------
-   RESPONSIVE
+   RESPONSIVE DESIGN
 ------------------------------ */
 
-/* Tablet + small laptop */
-@media (max-width: 900px) {
+/* Tablets & small laptops */
+@media (max-width: 1100px) {
+  .frame {
+    width: 80vw;
+    min-width: 0;
+  }
+}
+
+/* Phones – single column, stacked outputs */
+@media (max-width: 650px) {
+  .container {
+    padding: 0 12px;
+  }
+
   .frame {
     width: 100%;
     min-width: 0;
   }
 
   .card {
-    padding: 30px 20px;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    grid-column: 1;
-  }
-}
-
-/* Phone sizes */
-@media (max-width: 600px) {
-  .container {
-    padding: 0 12px;
-  }
-
-  .card {
     padding: 22px 16px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .title {
@@ -357,19 +417,28 @@ input:focus {
     font-size: 13px;
   }
 
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .form-actions {
+    grid-column: 1;
+  }
+
+  input {
+    font-size: 15px;
+    padding: 13px;
+  }
+
   .output-row {
-    flex-direction: column;      /* stack text + buttons */
+    flex-direction: column;
     align-items: flex-start;
   }
 
   .output-actions {
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .copy-btn,
-  .open-btn {
-    padding-inline: 14px;
   }
 }
 
